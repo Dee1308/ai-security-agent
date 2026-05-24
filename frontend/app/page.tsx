@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 interface Anomaly {
-  timestamp: str;
+  timestamp: string; // Fixed the 'str' compilation bug here
   user: string;
   ip: string;
   event: string;
@@ -34,9 +34,12 @@ export default function Dashboard() {
     { sender: "agent", text: "Systems online. Ask me anything about current network threats." }
   ]);
 
+  // Reads the hosted backend URL if deployed, or falls back to your local port 8000
+  const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
   // Pull dynamic data structures right from our FastAPI backend server
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/triage")
+    fetch(`${API_BASE_URL}/api/triage`)
       .then((res) => res.json())
       .then((resData) => {
         setData(resData);
@@ -49,7 +52,7 @@ export default function Dashboard() {
         console.error("Error communicating with API backend:", err);
         setLoading(false);
       });
-  }, []);
+  }, [API_BASE_URL]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +63,7 @@ export default function Dashboard() {
     setChatHistory((prev) => [...prev, { sender: "user", text: userMsg }]);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/chat", {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg }),
@@ -68,7 +71,7 @@ export default function Dashboard() {
       const chatData = await response.json();
       setChatHistory((prev) => [...prev, { sender: "agent", text: chatData.response }]);
     } catch (err) {
-      setChatHistory((prev) => [...prev, { sender: "agent", text: "⚠️ Technical communication error with local engine." }]);
+      setChatHistory((prev) => [...prev, { sender: "agent", text: "⚠️ Technical communication error with engine layer." }]);
     }
   };
 
